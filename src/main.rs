@@ -1,4 +1,4 @@
-use std::{env, error::Error, fs, io::{self, Write}, path::PathBuf};
+use std::{env, error::Error, fs, io::{self, Write}, process, path::PathBuf};
 mod args;
 
 
@@ -40,7 +40,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             print!("{}", s_out);
             io::stdout().flush().unwrap();
         } else {
-            panic!("unsupported operand type!")
+            println!("unsupported operand {}!", &op);
+            process::exit(1);
         }
         
     }
@@ -101,10 +102,11 @@ fn apply_flag_formatting(s: &mut String, flags: &Vec<args::Flag>) {
         // byte by byte for ASCII printable and nonprintables
         for byte in s.bytes() {
             match byte {
+                0x09 => out.push('\t'),
                 0x0A => out.push('\n'),
-                0x00..=0x1F => out.push_str(&format!("^{}", (byte + 0x40) as char)),
                 0x7F => out.push_str("^?"), // DEL
-                0x20..=0x7E => out.push(byte as char), //
+                0x00..=0x1F => out.push_str(&format!("^{}", (byte + 0x40) as char)),
+                0x20..=0x7E => out.push(byte as char), // standard printable ASCII characters
                 0x80..=0xFF => {
                     let printable = byte & 0x7F; // clears the leftmost/high bit. converts non ASCII into representative ASCII char
                     let display = match printable {
