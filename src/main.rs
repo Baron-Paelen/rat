@@ -6,9 +6,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     let raw_args: Vec<String> = env::args().skip(1).collect();
     let args: args::RatArgs = args::RatArgs::from(raw_args);
 
-    // println!("--------");
-    // println!("{}", args);
-    // println!("--------");
+    if args.flags.contains(&args::Flag::Help) {
+        args::RatArgs::display_help();
+        return Ok(());
+    }
+    if args.flags.contains(&args::Flag::Version) {
+        println!("0.0.1");
+        return Ok(());
+    }
     
     // loop through each operand
     'big: for op in args.operands {
@@ -24,7 +29,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         print!("{}", contents);
                         io::stdout().flush().unwrap();
                     },
-                    Err(e) => panic!("error!: {}", e),
+                    Err(_) => panic!("rat: -: Input/output error"),
                 }
             }
             
@@ -61,14 +66,6 @@ fn read_stdin() -> Result<(String, usize), &'static str> {
 }
 
 fn apply_flag_formatting(s: &mut String, flags: &Vec<args::Flag>) {
-    if flags.contains(&args::Flag::Help) {
-        args::RatArgs::display_help();
-        return;
-    }
-    if flags.contains(&args::Flag::Version) {
-        println!("0.0.1");
-        return;
-    }
     if flags.contains(&args::Flag::ShowTabs) {
         *s = s.replace("\t", "^I");
     }
@@ -171,10 +168,3 @@ fn apply_flag_formatting(s: &mut String, flags: &Vec<args::Flag>) {
     }
 }
 
-// use std::io;
-
-// fn main() -> io::Result<()> {
-//     let mut buffer = String::new();
-//     io::stdin().read_line(&mut buffer)?;
-//     Ok(())
-// }

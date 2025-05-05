@@ -9,28 +9,28 @@ impl RatArgs {
     pub fn display_help() {
         println!(
             r#"
-            Usage: rat [OPTION]... [FILE]...
-            Conratenate FILE(s) to standard ratput.
+Usage: rat [OPTION]... [FILE]...
+Conratenate FILE(s) to standard ratput.
 
-            With no FILE, or when FILE is '-', read standard input.
-            
-            -A, --show-all           equivalent to -vET
-            -b, --number-nonblank    number nonempty output lines, overrides -n
-            -e                       equivalent to -vE
-            -E, --show-ends          display $ at end of each line
-            -n, --number             number all output lines
-            -s, --squeeze-blank      suppress repeated empty output lines
-            -t                       equivalent to -vT
-            -T, --show-tabs          display TAB characters as ^I
-            -v, --show-nonprinting   use ^ and M- notation, except for LFD and TAB
-                --help        display this help and exit
-                --version     output version information and exit
+With no FILE, or when FILE is '-', read standard input.
 
-            Examples:
-            rat f - g  Output f's contents, then standard input, then g's contents.
-            rat        Copy standard input to standard output.
+    -A, --show-all           equivalent to -vET
+    -b, --number-nonblank    number nonempty output lines, overrides -n
+    -e                       equivalent to -vE
+    -E, --show-ends          display $ at end of each line
+    -n, --number             number all output lines
+    -s, --squeeze-blank      suppress repeated empty output lines
+    -t                       equivalent to -vT
+    -T, --show-tabs          display TAB characters as ^I
+    -v, --show-nonprinting   use ^ and M- notation, except for LFD and TAB
+        --help        display this help and exit
+        --version     output version information and exit
 
-            Disclaimer: This message was largely copied from "cat".
+Examples:
+    rat f - g  Output f's contents, then standard input, then g's contents.
+    rat        Copy standard input to standard output.
+
+Disclaimer: This message was largely copied from "cat".
             "#
         );
     }
@@ -48,7 +48,7 @@ impl From<Vec<String>> for RatArgs {
             if arg.starts_with("--") {
                 // long flags
 
-                let fs = Flag::f_reduce(&arg).unwrap_or_else(|| panic!("invalid flag {}!", arg));
+                let fs = Flag::f_reduce(&arg).unwrap_or_else(|| vec![Flag::Help]);
                 for f in fs {
                     out.flags.push(f);
                 }
@@ -63,7 +63,7 @@ impl From<Vec<String>> for RatArgs {
                 for c in arg.chars().skip(1) { // skip the '-'
                     // make sure each flag is a real one
                     let fs = Flag::f_reduce(&format!("-{}", c))
-                        .unwrap_or_else(|| panic!("invalid flag '{}' in {}!", c, arg));
+                        .unwrap_or_else(|| vec![Flag::Help]);
                     
                     for f in fs {
                         out.flags.push(f);
