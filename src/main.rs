@@ -1,4 +1,4 @@
-use std::{env, error::Error, fs, io::{self, Write}, process, path::PathBuf};
+use std::{env, error::Error, fs::File, io::{self, BufReader, Read, Write}, path::PathBuf, process};
 mod args;
 
 
@@ -49,12 +49,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-// unbuffered text reader
+// buffered text reader
 fn read_file(p: &String) -> Result<String, &str> {
-    match fs::read_to_string(p) {
-        Ok(v) => Ok(v),
-        Err(_) => Err("error in read_file()!"),
-    }
+    let f = File::open(p).map_err(|_| "error opening file!")?;
+    let mut reader = BufReader::new(f);
+    let mut contents = String::new();
+    reader.read_to_string(&mut contents).map_err(|_| "error reading file!")?;
+
+    Ok(contents)
 }
 
 // slightly buffered stdin reader
@@ -150,23 +152,29 @@ fn apply_flag_formatting(s: &mut String, flags: &Vec<args::Flag>) {
         *s = out;
     } 
     if flags.contains(&args::Flag::NumberLines) && !flags.contains(&args::Flag::NumberNonBlankLines) { // NNBL overrides NL
-        let indices: Vec<usize> = s.rmatch_indices('\n').map(|(i, _)| i).collect();
+        let lines = s.lines();
+        let mut out = String::new();
 
-        // this loop adds line numbers in reverse
-        for (i, c_lc) in indices.iter().skip(1).enumerate() {
-            let line_num = indices.len() - i;
-            let line_num_char_len = line_num.to_string().len();
-            let num_spaces = 6 - line_num_char_len;
+        for (n, l) in lines.enumerate() {
+            if l == "$" && flags.contains(&args::Flag::ShowEnds)  {
+                out.push_str("$\n");
+                continue;
+            } 
 
             // construct a string with the appropriate number of spaces
+            let line_num = n+1;
+            let line_num_char_len = line_num.to_string().len();
+            let num_spaces = 6 - line_num_char_len;
             let mut spaces = String::with_capacity(num_spaces);
             for _ in 0..num_spaces {
                 spaces.push(' ');
             }
-            let line_num_form = format!("{}{}\t", spaces, line_num);
-            s.insert_str(*c_lc+1, &line_num_form);
+
+            out.push_str(&format!("{}{}\t{}\n", spaces.as_str(), line_num, l));
+
         }
-        s.insert_str(0, "     1\t"); // add first line's line number
+        
+        *s = out;
     }
 }
 
